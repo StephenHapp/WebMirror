@@ -1,0 +1,16 @@
+- "en\.wikipedia\.org.*"    
++ "en\.wikipedia\.org/Wikipedia/Vital_articles/Level/5.*"
+LAYERS 3 4
+- ".*"
++ "en\.wikipedia\.org/wiki.*" !".*#.*"
+LAYERS 1 2
+
+# Comments should be ignored
+
+LAYER 1
+++ "foo" !"bar" "fizz"    !"buzz"
+- "foo"
+- !"fizz"
+
+
+    + "bar" "fizz" !"foo"

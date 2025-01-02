@@ -1,0 +1,80 @@
+Usage:
+python3 launch.py [options]
+
+Some options are required, namely the project's destination directory and a path to
+a text file containing links to download as layer 0:
+
+python3 launch.py dest:"./my_web_site" layer0:"./layer_0_links.txt" [options]
+
+Each option takes one or more values. The option name and values are separated
+by colons. Different options are separated by spaces. There is no enforced order
+for options to appear.
+
+Summary of options:
+
+dest:<path>                 Required; destination directory of mirror
+
+layer0:<path>               Required; text file of layer-0 links
+
+depth:<non-negative int>    Default=0; maximum depth of mirror
+
+linkrules:<path>            Default="./default/linkrules.txt"; text file of
+                            rules for selecting links to follow
+
+mediarules:<path>           Default="./default/mediarules.txt"; text file of
+                            rules for selecting files to download
+
+externalpage:<value>        Control whether external links lead to a local
+                            error webpage or original location.
+externalpage:true           Default; Links to external files are changed to link
+                            to an error page
+externalpage:false          Links to external files are left unchanged
+
+queries:<value>             Control whether links at the same address, but with
+                            different query parameters, should be treated as the
+                            same page or different pages.
+queries:true                Pages at same address but different queries are
+                            treated as different.
+queries:false               Default; pages at same address but different queries
+                            are considered identical.
+
+longnames:<value>           Control how to deal with long file names
+                            Note: file extension considered separate from file name
+longnames:nofix             Do not check for long file names
+longnames:trunc:<value>     Default; <value> is a positive integer; defaults to 64.
+                            File names longer than <value> characters are
+                            truncated to <value> characters.
+longnames:rand:<value>      <value> is a positive integer; defaults to 64.
+                            File names longer than <value> characters are
+                            replaced with random file names 8 chars in length.
+
+namechars:<value>           Control how to deal with special characters in file names.
+namechars:nofix             Do not modify characters in file names
+namechars:windows           Default; characters not supported by Windows are 
+                            replaced with underscores '_'
+namechars:<path>            Text file containing allowed characters. Characters
+                            not present in file are replaced with underscores '_'
+
+reservednames:<value>       Control whether to check for files with reserved
+                            file names
+reservednames:nofix         Do not check for reserved file names
+reservednames:windows       Default; file names that are reserved Windows names
+                            are replaced with a random name 8 chars in length.
+
+structure:<value>           Control the directory structure of the mirror
+structure:site              Default; mirror uses same structure as source
+structure:extension         Files are sorted into directories by their file
+                            extension
+structure:twodir            HTML files are stored in 'html' directory, all other
+                            file types stored in 'media' directory
+structure:onedir            All downloaded files stored in the same directory
+
+maxthreads:<value>          <value> is a positive integer; defaults to 50;
+                            sets the maximum number of simultaneous downloads
+                            to <value>
+
+maxrequests:<val1>:<val2>   <val1> and <val2> are positive integers. Limit
+                            the maximum number of sent requests per number of
+                            seconds to <val1> requests per <val2> seconds.
+maxrequests:nolimit         Default; do not limit number of requests per
+                            number of seconds

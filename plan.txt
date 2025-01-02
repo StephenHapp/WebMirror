@@ -1,0 +1,72 @@
+Order of things:
+0. User provides desired options for mirror download:
+    a. Name of project: This is the name of the folder where the website will
+        be stored. It will be in the same directory as the launch.py file. Required.
+    b. Path to file containing 'layer-0' html links to download and scan.
+        Required with at least 1 html link. Non-html links will be ignored.
+    c. Maximum depth of mirror. Default is 0; meaning only the HTML links supplied
+        in layer-0 file will be downloaded and scanned for media.
+    d. Path to file containing rules for which scanned links to include. Can
+        be specified by layer and by strings within link. (Could be joined with
+        step 0c). Default is to save all links on desired layers.
+    e. Path to file containing rules for what types of media files to store.
+        Can be specified by file extension, strings in file name, depth that
+        link was found, and file size. Resolution of videos would be great too,
+        but that requires downloading the video first to determine.
+    f. Additional options:
+        i. Links not downloaded link to external.html or are left alone? Default: external.html
+        ii. Include query parameters in downloaded filenames? (Default: no)
+        iii. Dealing with large file names (all options include file extension at end):
+            1. Keep all names as-is
+            2. Keep names up to an inputted length (default 64), longer names are truncated (default)
+            3. Keep names up to an inputted length (default 64), longer names assigned random names
+        iv. Dealing with directories and filenames with difficult characters to save as
+            1. Do not attempt to fix filenames
+            2. Characters not supported by Windows replaced with _ (default)
+            3. Characters not in a given string replaced with _ (ex: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/.)
+            4. (Additional checkbox) convert all letters to uppercase (off by default)
+        v. Dealing with windows-reserved file names
+            1. Do not change files with reserved names
+            2. Assign file random name (Default)
+        vi. Saved file structure
+            1. Follow site structure (default)
+            2. Sort files by file extension (no path structure saved)
+            3. Group HTML into 'html' folder, all others in 'media' folder (no path structure saved)
+            4. All files stored in single folder (no path structure saved)
+        vii. Maximum number of simultaneous downloads (default 50) (must be positive integer)
+        viii. Maximum number requests per number of seconds (Default: no limit)
+                (user may enter positive integers for requests and for seconds)
+                (examples: 5 requests per 1 second; 1 request per 2 seconds)
+1. Download all HTML files (do not modify them at this step)
+    a. Get list of 'layer-0' sites from user-supplied text file
+    b. Get user-specified desired options, including rules for which links to include
+    c. Repeat until all desired links are stored: (might be 0, in this case skip loop)
+        i. Download all pages on current layer
+        ii. Scan each page on layer for links that match user-supplied rules
+        iii. Only store links to pages not yet downloaded (in any layer)
+        iv. Links stored in this iteration make up next layer
+        v. User can specify different rules for different layers, in which case
+            HTML pages are applied to the rule associated with the earliest layer
+            they appeared
+    d. Download all HTML on final layer (all other layers downloaded by step 1c)
+    e. Have the generated structure store the highest layer each link was found,
+        along with the local path to where file was downloaded
+    f. Return the map of links downloaded: { layer_number : { original_link : local_file_path } }
+2. Scan all HTML and download media links according to user-defined rules
+    a. Get user-supplied rules for which media types to download along with each
+        page. User can specify different rules for different layers, in which case
+        HTML pages are applied to the rule associated with the earliest layer they
+        appeared
+    b. If media link is to be downloaded, check if it has already been downloaded
+        first, If not downloaded yet, download and store key/value pair of
+        download link with locally stored path
+        of original link with location stored locally
+    c. Return the map of files downloaded: {original_link : local_file_path}
+3. Use map(s) pairing original links to local paths to modify all links in
+    all downloaded HTML files.
+    a. For links that were downloaded, replace link in HTML with relative path
+        to downloaded file.
+    b. If 'external.html' option was enabled, replace links to files not downloaded
+        with the relative path to external.html?link=<original link>.
+    c. If 'external.html' option wasn't enabled, do not modify links to files
+        not downloaded.

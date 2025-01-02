@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webpage not downloaded</title>
+</head>
+<body>
+    <p>This webpage was not downloaded by WebMirror. </p>
+    <script language = "Javascript">
+        var loc = document.location.toString()
+        if (loc) {
+            let i = loc.indexOf("link=")
+            if (i > 0) {
+                let linkIndex = i + 5
+                document.write(
+                    'Visit the online webpage here: <a href="https://' + loc.substring(linkIndex) + '">' + loc.substring(linkIndex) + '</a>'
+                )
+            }
+        }
+    </script>
+</body>
+</html>

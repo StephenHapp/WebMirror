@@ -1,0 +1,224 @@
+Example file:
+
+- "en\.wikipedia\.org.*"    
++ "en\.wikipedia\.org/Wikipedia/Vital_articles/Level/5.*"
+LAYERS 3 4
+- ".*"
++ "en\.wikipedia\.org/wiki.*" !".*#.*"
+
+
+
+Inclusion/Exclusion:
+
++       Include the link if the rule matches, but continue checking following rules
+
+-       Exclude the link if the rule matches, but continue checking following rules
+
+++      IMMEDIATELY include the link if the rule matches, skipping all following
+        rules
+--      IMMEDIATELY exclude the link if the rule matches, skipping all following
+        rules
+
+Regular expresssions:
+
+""      Strings inside double quotes are evaluated as a regular expression using
+        Python's built-in library (re)
+
+!       NOT. Flips the result of the immediately following regular expression
+
+        List multiple regular expressions in a line to require that all expressions
+        apply to the link for the rule to take effect.
+
+LAYER   Indicate which layers the following rules should apply to. Both
+LAYERS  LAYER and LAYERS behave identically. The positive integers following
+        the word are the layers the rules apply to.
+
+#       Comments. Lines that begin with # are skipped immediately
+
+
+Details on the files for determining which links/files to include.
+
+The rules for determining which links to follow are deliberately seperated
+from the rules for determining which files to download. The former only applies
+to links found in href attributes of the <a> tags found in HTML files. The latter
+applies to all other links found in HTML files (mostly src attributes and some
+href attributes, such as in <link> tags). HTML files that were downloaded from
+a <link> tag or a src attribute may not be checked, as these are considered
+media.
+
+So how do these files work? Each time the program encounters a link, it will
+read through the corresponding rules file from top to bottom. Each line is
+considered a separate rule, so let's start with explaining the structure of
+a single line:
+
++ "www.google.com"
+^ ^^^^^^^^^^^^^^^
+1        2    
+
+1: Rules always start with a token indicating inclusion or exclusion. In the
+   above case, the plus sign '+' indicates inclusion.
+2: The portion following the initial token describes the link to search for.
+   In the simple case above, "www.google.com" will match only when the program
+   finds the exact link "www.google.com". Note that the case above will not
+   match with any variation, such as "google.com" or "www.google.com/maps".
+
+Putting the two parts together into one rule tells the program to include the
+exact link that matches "www.google.com". If this was the only rule in the file,
+then the program would download the web page at www.google.com only if the
+program encounters a link to www.google.com in a previously downloaded HTML file.
+
+There are four allowed tokens to indicate inclusion or exclusion:
+
++       Include the link if the rule matches, but continue checking following rules
+
+-       Exclude the link if the rule matches, but continue checking following rules
+
+++      IMMEDIATELY include the link if the rule matches, skipping all subsequent
+        rules
+--      IMMEDIATELY exclude the link if the rule matches, skipping all subsequent
+        rules
+
+
+Strings inside double quotation marks "" are treated as regular expressions, and
+handled using Python's built-in regex package (re). If the regular expression
+doesn't match the current link (for example, when checking for
+"www.google.com" on the link "www.bing.com"), the program skips the rule and
+the rule has no effect.
+
+A more advanced example for a single rule:
+
+- ".*foo.*" ".*txt"
+^ ^^^^^^^^^ ^^^^^^^^
+1     2        3
+
+1. Token indicating to exclude the link if the following rule matches.
+2. Regex expression that matches any link that has "foo" anywhere in the link.
+3. Regex expression that matches any link that ends with "txt"
+
+Consecutive regex expressions in a single rule tell the program that all 
+expressions in the line must match to the link for the rule to be applied. In
+other words, the 2 and 3 must be true for the rule to be excluded, otherwise
+the rule is ignored. 
+
+In the above example, this means the link "www.foobar.com/file.txt" will be
+excluded, where as "www.foo.com" will not be excluded, nor will
+"www.google.com" nor "www.google.com/file.txt". The rule would also not match
+"www.footxt.com", because the link does not end with "txt" as required by 3.
+
+You can include as many regular expressions in a single line as you like.
+Another example:
+
++ ".*a.*" ".*b.*" ".*c.*" ".*d.*"
+
+This rule only includes links that include the characters 'a', 'b,' 'c,' and 'd'
+all at least once each. The following links match the rule:
+"www.abcd.com", "docs.python.org/3/library"
+
+The following links do not match the above rule:
+"abc.xyz", "drive.google.com/drive", "docs.python.org"
+
+Add ! immediately before the start of a regular expression to indicate NOT; meaning
+the program will consider the opposite result of the expression.
+
+Example:
+- ".*wikipedia.*"
+The above rule excludes any links that have the string "wikipedia" within them.
+
+- !".*wikipedia.*"
+The above rule excludes any links that DO NOT have the string "wikipedia" within them.
+
+That's the extent of what a single line can do. When you include multiple
+lines within the file, you can specify more intricate rules for including and
+excluding links. The file will always be read from top to bottom, and when the
+bottom of the file is reached, the current state of the link at that point
+decides whether the link is downloaded or not.
+
+Example of a file:
+
++ ".*"
+- ".*org"
++ ".*wikipedia.*"
+
+This file would exclude all links ending in ".org" EXCEPT .org links that include
+"wikipedia" somewhere in the string. Follow along with the program through a 
+few examples:
+
+Given link "www.google.com"
++ ".*"              The link has 0 or more characters, so include it for now.
+- ".*org"           The link doesn't end with "org", so ignore this rule.
++ ".*wikipedia.*"   The link doesn't have "wikipedia" anywhere, so ignore this rule.
+Result: Include. Thus "www.google.com" is downloaded.
+
+Given link "docs.python.org"
++ ".*"              The link has 0 or more characters, so include it for now.
+- ".*org"           The link ends with "org", so actually exclude it for now.
++ ".*wikipedia.*"   The link doesn't have "wikipedia" anywhere, so ignore this rule.
+Result: Exclude. Thus "docs.python.org" is not downloaded.
+
+Given link "docs.python.org/3/library"
++ ".*"              The link has 0 or more characters, so include it for now.
+- ".*org"           The link doesn't end with "org", so ignore this rule.
++ ".*wikipedia.*"   The link doesn't have "wikipedia" anywhere, so ignore this rule.
+Result: Include. Thus "docs.python.org/3/library" is downloaded.
+Even though the link has the string "org", the second rule still doesn't apply
+because that rule is checking for links that END with "org".
+
+Given link "en.wikipedia.org"
++ ".*"              The link has 0 or more characters, so include it for now.
+- ".*org"           The link ends with "org", so actually exclude it for now.
++ ".*wikipedia.*"   The link has "wikipedia" in it, so actually include it for now.
+Result: Include. Thus "en.wikipedia.org" is downloaded.
+
+Before any lines of the file are read, the program begins with the rule + ".*"
+assumed at the very start, meaning all links begin with the assumption that they
+should be included. This also means if you were to provide an empty text file
+to serve as the rules file, every link that the program finds would be included.
+
+You can specify which rules should apply to which links depending on the highest
+layer a link was found. On any line, the keywords LAYER and LAYERS indicate that
+the following rules will only apply to the layer number(s) specified. The layer
+token applies to following rules, until a new LAYER or LAYERS token is reached.
+Example:
+
+LAYERS 1 2
+- ".*org"
+LAYER 3
+- ".*com"
+
+This tells the program that links that were first discovered on layers 1 or 2
+that end in "org" should be excluded, and that links that were first discovered
+on layer 3 that end in "com" should be excluded. Any links ending in "com" that
+were first discovered on layers 1 or 2, however, are NOT excluded according to
+these rules. Similarly, links ending in "org" that were first discovered on
+layer 3 are not excluded either.
+
+You are not limited to specifying layer numbers only once in the file, nor are
+you restricted in the order that layers must appear in the file, nor are you
+restricted to the number of links in between layer tokens:
+Example:
+
+- ".*"
++ ".*webm"
+LAYER 2
+++ ".*jpeg"
+++ ".*jpg"
+LAYERS 1 2 4
+- ".*webm"
++ ".*360p.*" ".*webm"
+
+Effect of the file on links for layers 1-4:
+1:  Only links that have "360p" and end with "webm" included.
+2:  Only links that have "360p" and end with "webm", OR
+    links that end with "jpeg" or "jpg" included.
+3:  Only links that end with "webm" included.
+4:  Only links that have "360p" and end with "webm" included.
+
+Any rules that appear before the first LAYER/LAYERS declaration are assumed to
+apply to all layers.
+
+Finally, the easiest for last: begin a line with a hashtag # to write a comment
+on the line. The program will skip past lines that begin with #.
+
+- ".*foo.*"
+# Comment
++ ".*bar.*"
